@@ -39,4 +39,4 @@ Subida por FTP a la raíz del hosting. La configuración local del cliente FTP v
 
 ---
 
-Desarrollado por [Lang-Lab](https://github.com/SamWebCodes) / Samuel Ramírez Sánchez.
+Desarrollado por [SamRamSan](https://github.com/SamWebCodes) / Samuel Ramírez Sánchez @ wms.guru.
