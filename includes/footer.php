@@ -11,6 +11,16 @@
  */
 
 declare(strict_types=1);
+
+/**
+ * Este archivo solo se carga desde index.php.
+ * El .htaccess ya impide alcanzarlo por URL; esto lo cubre por si un día
+ * el sitio corre sin .htaccess (Nginx, otro hosting, un contenedor).
+ */
+if (!defined('ORIGEN_ARGENTINO')) {
+	http_response_code(403);
+	exit;
+}
 ?>
 <footer class="site-footer">
 
@@ -29,13 +39,13 @@ declare(strict_types=1);
 
 		<ul class="site-footer-datos">
 			<li>
-				<a href="<?= htmlspecialchars(SITIO_MAPS_LINK, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
+				<a href="<?= esc(SITIO_MAPS_LINK) ?>" target="_blank" rel="noopener">
 					<span class="icono">
 						<svg aria-hidden="true" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg">
 							<path d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z" />
 						</svg>
 					</span>
-					<span class="texto"><?= htmlspecialchars(SITIO_DIRECCION, ENT_QUOTES, 'UTF-8') ?></span>
+					<span class="texto"><?= esc(SITIO_DIRECCION) ?></span>
 				</a>
 			</li>
 		</ul>
@@ -46,13 +56,13 @@ declare(strict_types=1);
 	<div class="site-footer-col site-footer-col-tel">
 		<ul class="site-footer-datos">
 			<li>
-				<a href="<?= htmlspecialchars(SITIO_TELEFONO_LINK, ENT_QUOTES, 'UTF-8') ?>">
+				<a href="<?= esc(SITIO_TELEFONO_LINK) ?>">
 					<span class="icono">
 						<svg aria-hidden="true" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
 							<path d="M497.39 361.8l-112-48a24 24 0 0 0-28 6.9l-49.6 60.6A370.66 370.66 0 0 1 130.6 204.11l60.6-49.6a23.94 23.94 0 0 0 6.9-28l-48-112A24.16 24.16 0 0 0 122.6.61l-104 24A24 24 0 0 0 0 48c0 256.5 207.9 464 464 464a24 24 0 0 0 23.4-18.6l24-104a24.29 24.29 0 0 0-14.01-27.6z" />
 						</svg>
 					</span>
-					<span class="texto"><?= htmlspecialchars(SITIO_TELEFONO_DISPLAY, ENT_QUOTES, 'UTF-8') ?></span>
+					<span class="texto"><?= esc(SITIO_TELEFONO_DISPLAY) ?></span>
 				</a>
 			</li>
 		</ul>
@@ -66,7 +76,7 @@ declare(strict_types=1);
 <div class="widget-contacto">
 
 	<div class="widget-contacto-canales" id="canales-contacto" inert>
-		<a class="widget-contacto-canal" href="<?= htmlspecialchars(SITIO_TELEFONO_LINK, ENT_QUOTES, 'UTF-8') ?>">
+		<a class="widget-contacto-canal" href="<?= esc(SITIO_TELEFONO_LINK) ?>">
 			<span class="widget-contacto-etiqueta">Llámanos</span>
 			<svg aria-hidden="true" viewBox="0 0 39 39" xmlns="http://www.w3.org/2000/svg">
 				<circle cx="19.4395" cy="19.4395" r="19.4395" fill="#03E78B" />
@@ -75,7 +85,7 @@ declare(strict_types=1);
 			<span class="visually-hidden">Llámanos por teléfono</span>
 		</a>
 
-		<a class="widget-contacto-canal" href="mailto:<?= htmlspecialchars(SITIO_EMAIL, ENT_QUOTES, 'UTF-8') ?>">
+		<a class="widget-contacto-canal" href="mailto:<?= esc(SITIO_EMAIL) ?>">
 			<span class="widget-contacto-etiqueta">Contáctanos</span>
 			<svg aria-hidden="true" viewBox="0 0 39 39" xmlns="http://www.w3.org/2000/svg">
 				<circle cx="19.4395" cy="19.4395" r="19.4395" fill="#FF485F" />
@@ -87,7 +97,7 @@ declare(strict_types=1);
 			<span class="visually-hidden">Escríbenos por correo</span>
 		</a>
 
-		<a class="widget-contacto-canal" href="<?= htmlspecialchars(SITIO_MAPS_WIDGET_LINK, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
+		<a class="widget-contacto-canal" href="<?= esc(SITIO_MAPS_WIDGET_LINK) ?>" target="_blank" rel="noopener">
 			<span class="widget-contacto-etiqueta">Visítanos</span>
 			<svg aria-hidden="true" viewBox="0 0 39 39" xmlns="http://www.w3.org/2000/svg">
 				<circle cx="19.4395" cy="19.4395" r="19.4395" fill="#37AA66" />
@@ -116,7 +126,7 @@ declare(strict_types=1);
 
 </div>
 
-<script src="assets/js/main.js" defer nonce="<?= htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="assets/js/main.js" defer nonce="<?= esc($csp_nonce) ?>"></script>
 </body>
 
 </html>

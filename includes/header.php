@@ -14,6 +14,19 @@
 declare(strict_types=1);
 
 /**
+ * Este archivo solo se carga desde index.php.
+ * El .htaccess ya impide alcanzarlo por URL; esto lo cubre por si un día
+ * el sitio corre sin .htaccess (Nginx, otro hosting, un contenedor).
+ */
+if (!defined('ORIGEN_ARGENTINO')) {
+	http_response_code(403);
+	exit;
+}
+
+// PHP no anuncia su versión.
+header_remove('X-Powered-By');
+
+/**
  * Nonce por petición para Content-Security-Policy.
  * Permite los scripts inline propios (gtag y JSON-LD) sin relajar el CSP.
  */
@@ -24,9 +37,14 @@ $csp_nonce = base64_encode(random_bytes(16));
  * Solo el dominio de producción es rastreable: cualquier otro host
  * (origen.wms.guru, una IP, localhost) se sirve con noindex/nofollow.
  * Al apuntar el dominio real, la etiqueta desaparece sola.
+ *
+ * HTTP_HOST lo controla quien hace la petición, así que se normaliza antes
+ * de compararlo (puerto y punto final del FQDN incluidos) y NUNCA se usa
+ * para construir URLs: el canonical y og:url salen de la constante.
  */
 $host_actual = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
 $host_actual = (string) preg_replace('/:\d+$/', '', $host_actual);
+$host_actual = rtrim($host_actual, '.');
 $es_produccion = ($host_actual === SITIO_HOST_PRODUCCION || $host_actual === 'www.' . SITIO_HOST_PRODUCCION);
 
 if (!$es_produccion) {
@@ -34,22 +52,93 @@ if (!$es_produccion) {
 }
 
 /**
- * Headers de seguridad emitidos desde PHP para sincronizarlos con el nonce.
- * El resto de headers (HSTS, referrer, etc.) vive en el .htaccess.
+ * Content-Security-Policy.
+ *
+ * Es lo único que se emite desde PHP porque depende del nonce de la petición;
+ * el resto de cabeceras de seguridad vive en el .htaccess, que además las
+ * aplica a los assets estáticos y a las páginas de error.
+ *
+ * Lista blanca cerrada: se parte de 'none' y se abre solo lo que el sitio
+ * carga de verdad. Todo lo que no aparezca aquí (iframes, workers, plugins,
+ * manifests, media, envíos de formulario) queda bloqueado por default-src.
  */
-header('Content-Security-Policy: ' .
-	"default-src 'self'; " .
-	"script-src 'nonce-{$csp_nonce}' 'strict-dynamic'; " .
-	"style-src 'self'; " .
-	"img-src 'self' data:; " .
-	"font-src 'self'; " .
-	"connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://region1.analytics.google.com https://stats.g.doubleclick.net; " .
-	"frame-ancestors 'none'; " .
-	"base-uri 'self'; " .
-	"form-action 'none'; " .
-	"object-src 'none'");
-header('X-Content-Type-Options: nosniff');
-header('Referrer-Policy: strict-origin-when-cross-origin');
+$csp = [
+	// Nada permitido salvo lo que se declare debajo.
+	"default-src 'none'",
+
+	// Scripts propios y gtag. 'strict-dynamic' deja que el script con nonce
+	// cargue los suyos; a cambio ignora 'self', así que TODO script del sitio
+	// necesita su atributo nonce o el navegador lo descarta en silencio.
+	"script-src 'nonce-{$csp_nonce}' 'strict-dynamic'",
+
+	// Hojas de estilo propias. Sin 'unsafe-inline': ni style="" ni <style>.
+	"style-src 'self'",
+
+	// Imágenes propias. Sin data: — no hay ninguna incrustada en el CSS.
+	"img-src 'self'",
+
+	// Las WOFF2 son locales.
+	"font-src 'self'",
+
+	// Únicos destinos de red: los recolectores de Google Analytics.
+	"connect-src https://www.google-analytics.com https://region1.google-analytics.com https://region1.analytics.google.com https://stats.g.doubleclick.net",
+
+	// Sin <base>: cierra el secuestro de rutas relativas.
+	"base-uri 'none'",
+
+	// El sitio no envía formularios a ninguna parte.
+	"form-action 'none'",
+
+	// Nadie puede meter el sitio en un marco (clickjacking).
+	"frame-ancestors 'none'",
+
+	// Redundantes frente a default-src 'none', pero explícitos para que un
+	// cambio futuro tenga que declararlos a propósito.
+	"frame-src 'none'",
+	"object-src 'none'",
+	"media-src 'none'",
+	"worker-src 'none'",
+	"manifest-src 'none'",
+
+	// Cualquier subrecurso que se cuele en http:// se pide en https://.
+	'upgrade-insecure-requests',
+];
+header('Content-Security-Policy: ' . implode('; ', $csp));
+
+/**
+ * Datos estructurados (schema.org Restaurant).
+ * Se construyen como arreglo y se serializan con json_encode: escapar JSON
+ * con htmlspecialchars no sirve dentro de <script> —el navegador no decodifica
+ * entidades ahí— y deja abierta la fuga por "</script>". JSON_HEX_TAG convierte
+ * "<" y ">" en </>, que es lo que cierra esa puerta de verdad.
+ */
+$datos_estructurados = [
+	'@context' => 'https://schema.org',
+	'@type' => 'Restaurant',
+	'name' => SITIO_NOMBRE,
+	'description' => SITIO_DESCRIPCION,
+	'url' => SITIO_URL_PRODUCCION,
+	'telephone' => SITIO_TELEFONO_E164,
+	'email' => SITIO_EMAIL,
+	'servesCuisine' => ['Argentina', 'Parrilla'],
+	'address' => [
+		'@type' => 'PostalAddress',
+		'streetAddress' => SITIO_DIR_CALLE,
+		'addressLocality' => SITIO_DIR_CIUDAD,
+		'addressRegion' => SITIO_DIR_ESTADO,
+		'postalCode' => SITIO_DIR_CP,
+		'addressCountry' => SITIO_DIR_PAIS,
+	],
+	'sameAs' => [SITIO_FACEBOOK, SITIO_INSTAGRAM],
+	'acceptsReservations' => SITIO_RESERVA_LINK,
+];
+
+$json_ld = (string) json_encode(
+	$datos_estructurados,
+	JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
+);
+// Alinea el bloque con la sangría del <head> al imprimirlo.
+$json_ld = str_replace("\n", "\n\t\t", $json_ld);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -57,10 +146,10 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title><?= htmlspecialchars(SITIO_NOMBRE, ENT_QUOTES, 'UTF-8') ?> &#8211; <?= htmlspecialchars(SITIO_ESLOGAN, ENT_QUOTES, 'UTF-8') ?></title>
-	<meta name="description" content="<?= htmlspecialchars(SITIO_DESCRIPCION, ENT_QUOTES, 'UTF-8') ?>">
+	<title><?= esc(SITIO_NOMBRE) ?> &#8211; <?= esc(SITIO_ESLOGAN) ?></title>
+	<meta name="description" content="<?= esc(SITIO_DESCRIPCION) ?>">
 	<?php if ($es_produccion): ?>
-		<link rel="canonical" href="https://origenargentino.com/">
+		<link rel="canonical" href="<?= esc(SITIO_URL_PRODUCCION) ?>">
 	<?php else: ?>
 		<!-- Entorno de prueba: fuera de buscadores. Sin canonical, para no
 	     arrastrar el noindex hacia el dominio de producción. -->
@@ -74,10 +163,10 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 
 	<!-- Open Graph -->
 	<meta property="og:type" content="restaurant">
-	<meta property="og:title" content="<?= htmlspecialchars(SITIO_NOMBRE, ENT_QUOTES, 'UTF-8') ?>">
-	<meta property="og:description" content="<?= htmlspecialchars(SITIO_DESCRIPCION, ENT_QUOTES, 'UTF-8') ?>">
-	<meta property="og:url" content="https://origenargentino.com/">
-	<meta property="og:image" content="https://origenargentino.com/assets/img/nosotros.webp">
+	<meta property="og:title" content="<?= esc(SITIO_NOMBRE) ?>">
+	<meta property="og:description" content="<?= esc(SITIO_DESCRIPCION) ?>">
+	<meta property="og:url" content="<?= esc(SITIO_URL_PRODUCCION) ?>">
+	<meta property="og:image" content="<?= esc(SITIO_URL_PRODUCCION . 'assets/img/nosotros.webp') ?>">
 
 	<!-- Estilos locales -->
 	<link rel="stylesheet" href="assets/css/fonts.css">
@@ -89,42 +178,22 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 	<link rel="preload" as="font" type="font/woff2" href="assets/fonts/montserrat-500.woff2" crossorigin>
 
 	<!-- Datos estructurados: Restaurant -->
-	<script type="application/ld+json" nonce="<?= htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8') ?>">
-		{
-			"@context": "https://schema.org",
-			"@type": "Restaurant",
-			"name": "<?= htmlspecialchars(SITIO_NOMBRE, ENT_QUOTES, 'UTF-8') ?>",
-			"description": "<?= htmlspecialchars(SITIO_DESCRIPCION, ENT_QUOTES, 'UTF-8') ?>",
-			"url": "https://origenargentino.com/",
-			"telephone": "+526646229730",
-			"email": "<?= htmlspecialchars(SITIO_EMAIL, ENT_QUOTES, 'UTF-8') ?>",
-			"servesCuisine": ["Argentina", "Parrilla"],
-			"address": {
-				"@type": "PostalAddress",
-				"streetAddress": "Escuadrón 201 3151, Aviación",
-				"addressLocality": "Tijuana",
-				"addressRegion": "Baja California",
-				"postalCode": "22014",
-				"addressCountry": "MX"
-			},
-			"sameAs": [
-				"https://web.facebook.com/OrigenArgentino",
-				"https://www.instagram.com/origen.argentino/"
-			],
-			"acceptsReservations": "https://www.opentable.com.mx/r/origen-argentino-tijuana"
-		}
+	<script type="application/ld+json" nonce="<?= esc($csp_nonce) ?>">
+		<?= $json_ld ?>
 	</script>
 
 	<!-- Google Tag Manager (analítica del cliente) -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=<?= htmlspecialchars(SITIO_GTM_ID, ENT_QUOTES, 'UTF-8') ?>" nonce="<?= htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8') ?>"></script>
-	<script nonce="<?= htmlspecialchars($csp_nonce, ENT_QUOTES, 'UTF-8') ?>">
+	<script async src="https://www.googletagmanager.com/gtag/js?id=<?= rawurlencode(SITIO_GTM_ID) ?>" nonce="<?= esc($csp_nonce) ?>"></script>
+	<script nonce="<?= esc($csp_nonce) ?>">
 		window.dataLayer = window.dataLayer || [];
 
 		function gtag() {
 			dataLayer.push(arguments);
 		}
 		gtag('js', new Date());
-		gtag('config', '<?= htmlspecialchars(SITIO_GTM_ID, ENT_QUOTES, 'UTF-8') ?>');
+		// El ID sale por json_encode: dentro de <script> el escapado HTML no
+		// aplica, y esto lo entrega ya como literal de cadena JS válido.
+		gtag('config', <?= json_encode(SITIO_GTM_ID, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES) ?>);
 	</script>
 </head>
 
@@ -175,12 +244,12 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 
 			<div class="site-header-col site-header-col-social">
 				<div class="site-social">
-					<a href="<?= htmlspecialchars(SITIO_FACEBOOK, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" aria-label="Facebook">
+					<a href="<?= esc(SITIO_FACEBOOK) ?>" target="_blank" rel="noopener" aria-label="Facebook">
 						<svg aria-hidden="true" viewBox="0 0 320 512" xmlns="http://www.w3.org/2000/svg">
 							<path d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z" />
 						</svg>
 					</a>
-					<a href="<?= htmlspecialchars(SITIO_INSTAGRAM, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" aria-label="Instagram">
+					<a href="<?= esc(SITIO_INSTAGRAM) ?>" target="_blank" rel="noopener" aria-label="Instagram">
 						<svg aria-hidden="true" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
 							<path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z" />
 						</svg>

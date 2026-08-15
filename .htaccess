@@ -1,46 +1,137 @@
 # ============================================================
 # Origen Argentino — Configuración Apache
-# HTTPS forzado, headers de seguridad, compresión y caché.
-# El CSP con nonce lo emite PHP (includes/header.php).
+# HTTPS forzado, cabeceras de seguridad, compresión y caché.
+#
+# Reparto de responsabilidades:
+#   - Este archivo emite TODAS las cabeceras de seguridad fijas, para que
+#     también las reciban CSS, JS, fuentes, imágenes y las páginas de error.
+#   - PHP (includes/header.php) emite solo lo que depende de la petición:
+#     el CSP con nonce y el X-Robots-Tag por entorno.
+#   Nunca se define aquí el CSP de los documentos HTML: mod_headers y PHP
+#   escriben en tablas distintas y el navegador recibiría DOS cabeceras CSP,
+#   aplicando la intersección de ambas (la página se rompería en silencio).
 # ============================================================
 
-Options -Indexes
+Options -Indexes -MultiViews
 ServerSignature Off
+
+# Sin ETag: su valor deriva del inodo del archivo y filtra detalles del disco.
+FileETag None
 
 # La raíz "/" sirve index.php sin exponerlo en la URL.
 DirectoryIndex index.php
 
-# ---------- HTTPS forzado ----------
+# ---------- Reescrituras ----------
 <IfModule mod_rewrite.c>
 	RewriteEngine On
 
-	RewriteCond %{HTTPS} off
+	# 1) ACME SIEMPRE PRIMERO, y sin tocar nada.
+	#    La validación HTTP-01 de Let's Encrypt entra por http:// y por una
+	#    ruta que empieza con punto (/.well-known/acme-challenge/...). Si la
+	#    redirección a HTTPS o el bloqueo de dotfiles se aplicaran antes, la
+	#    renovación del certificado fallaría y el sitio se quedaría sin TLS.
+	RewriteRule ^\.well-known/ - [L]
+
+	# 2) HTTPS forzado, tolerante a proxy inverso.
+	#    Si el TLS lo termina un balanceador, %{HTTPS} llega "off" en todas
+	#    las peticiones: redirigir solo con esa condición provocaría un bucle
+	#    infinito y el sitio dejaría de entregarse. Por eso se consultan
+	#    también las cabeceras que pone el proxy y el puerto real.
+	RewriteCond %{HTTPS} !=on
+	RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+	RewriteCond %{HTTP:X-Forwarded-SSL} !=on
+	RewriteCond %{SERVER_PORT} !=443
 	RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-	# Rutas heredadas de WordPress: devolver 410 (ya no existen).
-	# Evita rastreo infinito de los bots sobre /wp-content, /feed, etc.
+	# 3) Métodos permitidos: cierra PUT, DELETE, PATCH, CONNECT y demás verbos
+	#    que el sitio no atiende. POST queda abierto para el gestor de
+	#    contenidos pendiente; hoy no hay ningún formulario y puede quitarse
+	#    de la lista sin efecto alguno.
+	#
+	#    OJO: TRACE NO se puede cerrar desde aquí. Apache lo responde en el
+	#    núcleo, antes de mod_rewrite, y <Limit TRACE> tampoco lo alcanza
+	#    (comprobado contra Apache 2.4.66). Requiere "TraceEnable Off" en la
+	#    configuración del servidor o del VirtualHost: pedírselo al hosting.
+	RewriteCond %{REQUEST_METHOD} !^(GET|HEAD|POST)$
+	RewriteRule ^ - [F]
+
+	# 4) Rutas heredadas de WordPress: devolver 410 (ya no existen).
+	#    Evita rastreo infinito de los bots sobre /wp-content, /feed, etc.
 	RewriteRule ^wp-(content|includes|admin|json|login)(/|$) - [G,NC]
 	RewriteRule ^(feed|comments|xmlrpc\.php|wp-cron\.php)($|/) - [G,NC]
 
-	# Sin "www" (canónico: origenargentino)
+	# 5) El código y la configuración no se sirven por URL.
+	#    Los require() de PHP van por sistema de archivos y no pasan por aquí.
+	RewriteRule ^(config|includes)/ - [F]
+
+	# 6) Nada ejecutable dentro de assets/ (blindaje para las subidas del
+	#    futuro gestor: una imagen renombrada a .php nunca correrá).
+	RewriteRule ^assets/.*\.(php[0-9]?|phtml|phps|phar|inc|cgi|pl|py|sh)$ - [F,NC]
+
+	# 7) Archivos y carpetas ocultos: .git, .env, .vscode, .htaccess…
+	#    .well-known ya salió del flujo en la regla 1.
+	RewriteRule (^|/)\. - [F]
+
+	# 8) Extensiones que nunca deben servirse (respaldos, volcados, registros).
+	RewriteRule \.(bak|old|orig|save|swp|swo|tmp|dist|ini|sh|sql|log|conf|inc|yml|yaml|lock)$ - [F,NC]
+
+	# 9) Sin "www" (canónico: origenargentino)
 	RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
 	RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
 
-	# Sin "index.php" (canónico: la raíz).
-	# Se compara contra THE_REQUEST (la línea literal que mandó el navegador)
-	# y no contra la ruta ya reescrita: así la subpetición interna que genera
-	# DirectoryIndex al servir "/" no vuelve a disparar la regla, que es lo
-	# que provocaría un bucle infinito de redirecciones.
+	# 10) Sin "index.php" (canónico: la raíz).
+	#    Se compara contra THE_REQUEST (la línea literal que mandó el navegador)
+	#    y no contra la ruta ya reescrita: así la subpetición interna que genera
+	#    DirectoryIndex al servir "/" no vuelve a disparar la regla, que es lo
+	#    que provocaría un bucle infinito de redirecciones.
+	#
+	#    El destino se escribe absoluto y con https:// a propósito. Con un
+	#    destino relativo ("/"), Apache compone la URL con SU propio esquema:
+	#    detrás de un proxy que termina el TLS eso son peticiones https que
+	#    salen redirigidas a http, un salto en claro innecesario.
 	RewriteCond %{THE_REQUEST} \s/+index\.php[\s?] [NC]
-	RewriteRule ^ / [L,R=301]
+	RewriteRule ^ https://%{HTTP_HOST}/ [L,R=301]
 </IfModule>
 
-# ---------- Headers de seguridad ----------
+# ---------- Cabeceras de seguridad ----------
 <IfModule mod_headers.c>
+	# HTTPS obligatorio durante un año, subdominios incluidos.
+	# Antes de mover el DNS hay que confirmar que TODO subdominio de
+	# origenargentino.com tenga certificado válido: con includeSubDomains, uno
+	# que solo hable HTTP se vuelve inalcanzable desde el navegador.
+	# "preload" NO se activa: es prácticamente irreversible.
 	Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
 	Header always set X-Frame-Options "DENY"
-	Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+	Header always set X-Content-Type-Options "nosniff"
+	Header always set Referrer-Policy "strict-origin-when-cross-origin"
+	Header always set X-Permitted-Cross-Domain-Policies "none"
 	Header always set Cross-Origin-Opener-Policy "same-origin"
+	Header always set Cross-Origin-Resource-Policy "same-origin"
+
+	# Se deniegan todas las APIs del navegador: el sitio no usa ninguna.
+	Header always set Permissions-Policy "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), bluetooth=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), web-share=(), xr-spatial-tracking=()"
+
+	# El servidor no anuncia con qué está construido el sitio.
+	Header always unset X-Powered-By
+	Header always unset X-Pingback
+	Header always unset X-Generator
+	Header always unset X-Runtime
+
+	# Excepción para las imágenes: la miniatura de Open Graph la descargan
+	# servicios externos al compartir el enlace. Con same-origin, un cliente
+	# que la cargue como subrecurso desde otro dominio no la vería.
+	<FilesMatch "\.(webp|svg|png|jpe?g|gif|ico)$">
+		Header always set Cross-Origin-Resource-Policy "cross-origin"
+	</FilesMatch>
+
+	# CSP de respaldo para lo que NO genera PHP. Solo tiene efecto si alguien
+	# navega directamente al archivo (un .svg abierto como documento puede
+	# ejecutar scripts); como subrecurso, el navegador lo ignora.
+	# Los .php quedan fuera a propósito: su CSP lo emite includes/header.php.
+	<FilesMatch "\.(css|js|mjs|svg|webp|png|jpe?g|gif|ico|woff2?|ttf|txt|xml)$">
+		Header always set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+	</FilesMatch>
 </IfModule>
 
 # ---------- Compresión ----------
@@ -66,7 +157,9 @@ DirectoryIndex index.php
 </IfModule>
 
 # ---------- Protección de archivos sensibles ----------
-<FilesMatch "^(constants\.php|.*\.log|.*\.sql|.*\.md)$">
+# Duplica a propósito parte de las reglas 5-8: si mod_rewrite no estuviera
+# disponible, esto sigue cerrando el paso.
+<FilesMatch "^(constants\.php|header\.php|footer\.php|.*\.log|.*\.sql|.*\.md|.*\.json|.*\.lock)$">
 	Require all denied
 </FilesMatch>
 
