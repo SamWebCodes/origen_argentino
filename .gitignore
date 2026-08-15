@@ -2,6 +2,9 @@
 # .vscode/sftp.json guarda host, usuario y contraseña del FTP: nunca se versiona.
 .vscode/
 
+# Contexto de trabajo de Claude Code: privado, no se versiona ni se sube.
+CLAUDE.md
+
 # macOS
 .DS_Store
 ._*
