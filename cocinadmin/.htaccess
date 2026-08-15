@@ -1,0 +1,31 @@
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+LimitRequestBody 12582912
+
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+
+	# El almacenamiento, el código y las herramientas nunca son públicos.
+	RewriteRule ^(?:\.storage|app|bin)(?:/|$) - [F,L,NC]
+
+	# Solo GET/HEAD/POST son necesarios para el panel.
+	RewriteCond %{REQUEST_METHOD} !^(GET|HEAD|POST)$
+	RewriteRule ^ - [F,L]
+
+	# Defensa adicional ante cualquier ejecutable colocado en assets o uploads.
+	RewriteRule ^(?:assets|uploads)/.*\.(?:php[0-9]?|phtml|phps|phar|inc|cgi|pl|py|sh)$ - [F,L,NC]
+
+	# Dotfiles distintos de la propia configuración tampoco se sirven.
+	RewriteRule (^|/)\. - [F,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+	Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet"
+	Header always set X-Content-Type-Options "nosniff"
+	Header always unset X-Powered-By
+</IfModule>
+
+<FilesMatch "\.(?:sqlite|sqlite3|db|db3|sql|key|pem|log|bak|zip|tar|gz)$">
+	Require all denied
+</FilesMatch>
+

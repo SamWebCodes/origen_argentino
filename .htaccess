@@ -25,14 +25,19 @@ DirectoryIndex index.php
 <IfModule mod_rewrite.c>
 	RewriteEngine On
 
-	# 1) ACME SIEMPRE PRIMERO, y sin tocar nada.
+	# 1) Solo los hosts operativos pueden alcanzar el sitio. Esto evita que
+	#    HTTP_HOST termine reflejado en una redirección o en una caché compartida.
+	RewriteCond %{HTTP_HOST} !^(www\.)?(origenargentino\.com|origen\.wms\.guru)(:[0-9]+)?$ [NC]
+	RewriteRule ^ - [F,L]
+
+	# 2) ACME antes de redirecciones y bloqueos de dotfiles.
 	#    La validación HTTP-01 de Let's Encrypt entra por http:// y por una
 	#    ruta que empieza con punto (/.well-known/acme-challenge/...). Si la
 	#    redirección a HTTPS o el bloqueo de dotfiles se aplicaran antes, la
 	#    renovación del certificado fallaría y el sitio se quedaría sin TLS.
 	RewriteRule ^\.well-known/ - [L]
 
-	# 2) HTTPS forzado, tolerante a proxy inverso.
+	# 3) HTTPS forzado, tolerante a proxy inverso.
 	#    Si el TLS lo termina un balanceador, %{HTTPS} llega "off" en todas
 	#    las peticiones: redirigir solo con esa condición provocaría un bucle
 	#    infinito y el sitio dejaría de entregarse. Por eso se consultan
@@ -43,10 +48,8 @@ DirectoryIndex index.php
 	RewriteCond %{SERVER_PORT} !=443
 	RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-	# 3) Métodos permitidos: cierra PUT, DELETE, PATCH, CONNECT y demás verbos
-	#    que el sitio no atiende. POST queda abierto para el gestor de
-	#    contenidos pendiente; hoy no hay ningún formulario y puede quitarse
-	#    de la lista sin efecto alguno.
+	# 4) Métodos permitidos: cierra PUT, DELETE, PATCH, CONNECT y demás verbos.
+	#    POST queda abierto porque Cocinadmin lo usa para auth, contenido y medios.
 	#
 	#    OJO: TRACE NO se puede cerrar desde aquí. Apache lo responde en el
 	#    núcleo, antes de mod_rewrite, y <Limit TRACE> tampoco lo alcanza
@@ -55,31 +58,31 @@ DirectoryIndex index.php
 	RewriteCond %{REQUEST_METHOD} !^(GET|HEAD|POST)$
 	RewriteRule ^ - [F]
 
-	# 4) Rutas heredadas de WordPress: devolver 410 (ya no existen).
+	# 5) Rutas heredadas de WordPress: devolver 410 (ya no existen).
 	#    Evita rastreo infinito de los bots sobre /wp-content, /feed, etc.
 	RewriteRule ^wp-(content|includes|admin|json|login)(/|$) - [G,NC]
 	RewriteRule ^(feed|comments|xmlrpc\.php|wp-cron\.php)($|/) - [G,NC]
 
-	# 5) El código y la configuración no se sirven por URL.
+	# 6) El código y la configuración no se sirven por URL.
 	#    Los require() de PHP van por sistema de archivos y no pasan por aquí.
 	RewriteRule ^(config|includes)/ - [F]
+	RewriteRule ^cocinadmin/(?:\.storage|app|bin)(?:/|$) - [F,NC]
 
-	# 6) Nada ejecutable dentro de assets/ (blindaje para las subidas del
-	#    futuro gestor: una imagen renombrada a .php nunca correrá).
+	# 7) Nada ejecutable dentro de assets/.
 	RewriteRule ^assets/.*\.(php[0-9]?|phtml|phps|phar|inc|cgi|pl|py|sh)$ - [F,NC]
 
-	# 7) Archivos y carpetas ocultos: .git, .env, .vscode, .htaccess…
+	# 8) Archivos y carpetas ocultos: .git, .env, .vscode, .htaccess…
 	#    .well-known ya salió del flujo en la regla 1.
 	RewriteRule (^|/)\. - [F]
 
-	# 8) Extensiones que nunca deben servirse (respaldos, volcados, registros).
-	RewriteRule \.(bak|old|orig|save|swp|swo|tmp|dist|ini|sh|sql|log|conf|inc|yml|yaml|lock)$ - [F,NC]
+	# 9) Extensiones que nunca deben servirse (respaldos, volcados, registros).
+	RewriteRule \.(bak|old|orig|save|swp|swo|tmp|dist|ini|sh|sql|sqlite|sqlite3|sqlite3-wal|sqlite3-shm|db|db3|db-wal|db-shm|key|pem|log|conf|inc|yml|yaml|lock|zip|tar|gz)$ - [F,NC]
 
-	# 9) Sin "www" (canónico: origenargentino)
+	# 10) Sin "www" (canónico: origenargentino)
 	RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
 	RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
 
-	# 10) Sin "index.php" (canónico: la raíz).
+	# 11) Sin "index.php" (canónico: la raíz).
 	#    Se compara contra THE_REQUEST (la línea literal que mandó el navegador)
 	#    y no contra la ruta ya reescrita: así la subpetición interna que genera
 	#    DirectoryIndex al servir "/" no vuelve a disparar la regla, que es lo
@@ -157,9 +160,9 @@ DirectoryIndex index.php
 </IfModule>
 
 # ---------- Protección de archivos sensibles ----------
-# Duplica a propósito parte de las reglas 5-8: si mod_rewrite no estuviera
+# Duplica a propósito parte de las reglas 6-9: si mod_rewrite no estuviera
 # disponible, esto sigue cerrando el paso.
-<FilesMatch "^(constants\.php|header\.php|footer\.php|.*\.log|.*\.sql|.*\.md|.*\.json|.*\.lock)$">
+<FilesMatch "^(constants\.php|header\.php|footer\.php|.*\.log|.*\.sql|.*\.sqlite|.*\.sqlite3|.*\.sqlite3-wal|.*\.sqlite3-shm|.*\.db|.*\.db3|.*\.db-wal|.*\.db-shm|.*\.key|.*\.pem|.*\.md|.*\.json|.*\.lock)$">
 	Require all denied
 </FilesMatch>
 

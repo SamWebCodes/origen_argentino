@@ -120,7 +120,7 @@ $datos_estructurados = [
 	'url' => SITIO_URL_PRODUCCION,
 	'telephone' => SITIO_TELEFONO_E164,
 	'email' => SITIO_EMAIL,
-	'servesCuisine' => ['Argentina', 'Parrilla'],
+	'servesCuisine' => [SITIO_COCINA_PRINCIPAL, SITIO_COCINA_SECUNDARIA],
 	'address' => [
 		'@type' => 'PostalAddress',
 		'streetAddress' => SITIO_DIR_CALLE,
@@ -135,7 +135,7 @@ $datos_estructurados = [
 
 $json_ld = (string) json_encode(
 	$datos_estructurados,
-	JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
+	JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PRETTY_PRINT
 );
 // Alinea el bloque con la sangría del <head> al imprimirlo.
 $json_ld = str_replace("\n", "\n\t\t", $json_ld);
@@ -157,23 +157,24 @@ $json_ld = str_replace("\n", "\n\t\t", $json_ld);
 	<?php endif; ?>
 
 	<!-- Favicons -->
-	<link rel="icon" type="image/webp" href="assets/img/favicon-32.webp" sizes="32x32">
-	<link rel="icon" type="image/webp" href="assets/img/favicon-192.webp" sizes="192x192">
-	<link rel="apple-touch-icon" href="assets/img/favicon-192.webp">
+	<link rel="icon" type="image/webp" href="<?= esc(oa_media_url('favicon_small')) ?>" sizes="32x32">
+	<link rel="icon" type="image/webp" href="<?= esc(oa_media_url('favicon_large')) ?>" sizes="192x192">
+	<link rel="apple-touch-icon" href="<?= esc(oa_media_url('favicon_large')) ?>">
 
 	<!-- Open Graph -->
 	<meta property="og:type" content="restaurant">
 	<meta property="og:title" content="<?= esc(SITIO_NOMBRE) ?>">
 	<meta property="og:description" content="<?= esc(SITIO_DESCRIPCION) ?>">
 	<meta property="og:url" content="<?= esc(SITIO_URL_PRODUCCION) ?>">
-	<meta property="og:image" content="<?= esc(SITIO_URL_PRODUCCION . 'assets/img/nosotros.webp') ?>">
+	<meta property="og:image" content="<?= esc(SITIO_URL_PRODUCCION . oa_media_url('origin_photo')) ?>">
 
 	<!-- Estilos locales -->
 	<link rel="stylesheet" href="assets/css/fonts.css">
 	<link rel="stylesheet" href="assets/css/style.css">
+	<link rel="stylesheet" href="cocinadmin/content.css.php?v=<?= oa_content_revision() ?>">
 
 	<!-- Precarga de la imagen y las fuentes visibles en el primer pantallazo -->
-	<link rel="preload" as="image" href="assets/img/hero-bg.webp" fetchpriority="high">
+	<link rel="preload" as="image" href="<?= esc(oa_media_url('hero_background')) ?>" fetchpriority="high">
 	<link rel="preload" as="font" type="font/woff2" href="assets/fonts/montserrat-200-italic.woff2" crossorigin>
 	<link rel="preload" as="font" type="font/woff2" href="assets/fonts/montserrat-500.woff2" crossorigin>
 
@@ -199,31 +200,31 @@ $json_ld = str_replace("\n", "\n\t\t", $json_ld);
 
 <body>
 
-	<a class="skip-link" href="#contenido">Ir al contenido</a>
+	<a class="skip-link" href="#contenido"><?= esc(oa_setting('skip_link_label')) ?></a>
 
 	<header id="header" class="site-header">
 		<div class="site-header-inner">
 
 			<div class="site-header-col site-header-col-logo">
-				<a href="index.php" class="site-header-logo" aria-label="Ir al inicio">
+				<a href="index.php" class="site-header-logo" aria-label="<?= esc(oa_setting('home_aria_label')) ?>">
 					<picture>
-						<source media="(max-width: 767px)" srcset="assets/img/logo-negro.svg" width="930" height="1127">
-						<img src="assets/img/logo.webp" alt="Logo de Origen Argentino" width="802" height="911" fetchpriority="high">
+						<source media="(max-width: 767px)" srcset="<?= esc(oa_media_url('logo_compact')) ?>" width="930" height="1127">
+						<img src="<?= esc(oa_media_url('logo_desktop')) ?>" alt="<?= esc((string) oa_media('logo_desktop')['alt_text']) ?>" width="802" height="911" fetchpriority="high">
 					</picture>
 				</a>
 			</div>
 
 			<div class="site-header-col site-header-col-nav">
-				<nav class="site-nav" aria-label="Menú principal">
+				<nav class="site-nav" aria-label="<?= esc(oa_setting('nav_aria_label')) ?>">
 					<ul class="site-nav-list">
-						<li><a href="index.php" aria-current="page">Inicio</a></li>
-						<li><a href="index.php#origen">Nuestro Origen</a></li>
-						<li><a href="index.php#reserva">Reserva</a></li>
-						<li><a href="index.php#galeria">Galería</a></li>
+						<li><a href="index.php" aria-current="page"><?= esc(oa_setting('nav_home_label')) ?></a></li>
+						<li><a href="index.php#origen"><?= esc(oa_setting('nav_origin_label')) ?></a></li>
+						<li><a href="index.php#reserva"><?= esc(oa_setting('nav_reservation_label')) ?></a></li>
+						<li><a href="index.php#galeria"><?= esc(oa_setting('nav_gallery_label')) ?></a></li>
 					</ul>
 				</nav>
 
-				<button class="nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-desplegable">
+				<button class="nav-toggle" type="button" aria-label="<?= esc(oa_setting('nav_open_label')) ?>" aria-expanded="false" aria-controls="menu-desplegable" data-label-open="<?= esc(oa_setting('nav_open_label')) ?>" data-label-close="<?= esc(oa_setting('nav_close_label')) ?>">
 					<svg class="icono-abrir" aria-hidden="true" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
 						<path d="M104 333H896C929 333 958 304 958 271S929 208 896 208H104C71 208 42 237 42 271S71 333 104 333ZM104 583H896C929 583 958 554 958 521S929 458 896 458H104C71 458 42 487 42 521S71 583 104 583ZM104 833H896C929 833 958 804 958 771S929 708 896 708H104C71 708 42 737 42 771S71 833 104 833Z" />
 					</svg>
@@ -232,24 +233,24 @@ $json_ld = str_replace("\n", "\n\t\t", $json_ld);
 					</svg>
 				</button>
 
-				<nav id="menu-desplegable" class="site-nav-desplegable" aria-label="Menú desplegable" inert>
+				<nav id="menu-desplegable" class="site-nav-desplegable" aria-label="<?= esc(oa_setting('nav_dropdown_aria_label')) ?>" inert>
 					<ul>
-						<li><a href="index.php" aria-current="page">Inicio</a></li>
-						<li><a href="index.php#origen">Nuestro Origen</a></li>
-						<li><a href="index.php#reserva">Reserva</a></li>
-						<li><a href="index.php#galeria">Galería</a></li>
+						<li><a href="index.php" aria-current="page"><?= esc(oa_setting('nav_home_label')) ?></a></li>
+						<li><a href="index.php#origen"><?= esc(oa_setting('nav_origin_label')) ?></a></li>
+						<li><a href="index.php#reserva"><?= esc(oa_setting('nav_reservation_label')) ?></a></li>
+						<li><a href="index.php#galeria"><?= esc(oa_setting('nav_gallery_label')) ?></a></li>
 					</ul>
 				</nav>
 			</div>
 
 			<div class="site-header-col site-header-col-social">
 				<div class="site-social">
-					<a href="<?= esc(SITIO_FACEBOOK) ?>" target="_blank" rel="noopener" aria-label="Facebook">
+					<a href="<?= esc(SITIO_FACEBOOK) ?>" target="_blank" rel="noopener" aria-label="<?= esc(oa_setting('facebook_aria_label')) ?>">
 						<svg aria-hidden="true" viewBox="0 0 320 512" xmlns="http://www.w3.org/2000/svg">
 							<path d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z" />
 						</svg>
 					</a>
-					<a href="<?= esc(SITIO_INSTAGRAM) ?>" target="_blank" rel="noopener" aria-label="Instagram">
+					<a href="<?= esc(SITIO_INSTAGRAM) ?>" target="_blank" rel="noopener" aria-label="<?= esc(oa_setting('instagram_aria_label')) ?>">
 						<svg aria-hidden="true" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
 							<path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z" />
 						</svg>

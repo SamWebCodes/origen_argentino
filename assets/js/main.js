@@ -18,6 +18,8 @@
     if (!toggle || !menu) {
       return;
     }
+    const etiquetaAbrir = toggle.dataset.labelOpen || 'Abrir menú';
+    const etiquetaCerrar = toggle.dataset.labelClose || 'Cerrar menú';
 
     /**
      * Abre o cierra el desplegable manteniendo sincronizados
@@ -26,7 +28,7 @@
      */
     function alternar(abrir) {
       toggle.setAttribute('aria-expanded', String(abrir));
-      toggle.setAttribute('aria-label', abrir ? 'Cerrar menú' : 'Abrir menú');
+      toggle.setAttribute('aria-label', abrir ? etiquetaCerrar : etiquetaAbrir);
       menu.classList.toggle('abierto', abrir);
       menu.inert = !abrir;
     }
@@ -257,6 +259,8 @@
     if (!boton || !canales) {
       return;
     }
+    const etiquetaAbrir = boton.dataset.labelOpen || 'Abrir opciones de contacto';
+    const etiquetaCerrar = boton.dataset.labelClose || 'Cerrar opciones de contacto';
 
     /**
      * Muestra u oculta los canales de contacto.
@@ -265,7 +269,7 @@
     function alternar(abrir) {
       widget.classList.toggle('abierto', abrir);
       boton.setAttribute('aria-expanded', String(abrir));
-      boton.setAttribute('aria-label', abrir ? 'Cerrar opciones de contacto' : 'Abrir opciones de contacto');
+      boton.setAttribute('aria-label', abrir ? etiquetaCerrar : etiquetaAbrir);
       canales.inert = !abrir;
     }
 

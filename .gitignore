@@ -16,6 +16,15 @@ TODO.md
 *.log
 *.sql
 
+# Runtime de Cocinadmin: nunca se versiona. DB/app.key se despliegan de forma
+# consistente cuando no hay CLI; sesiones, temporales y respaldos nunca.
+cocinadmin/.storage/*
+!cocinadmin/.storage/.htaccess
+!cocinadmin/.storage/.gitkeep
+cocinadmin/uploads/*
+!cocinadmin/uploads/.htaccess
+!cocinadmin/uploads/.gitkeep
+
 # Temporales del editor
 *.swp
 *~
