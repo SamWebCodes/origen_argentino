@@ -1,0 +1,1328 @@
+/* ============================================================
+   Origen Argentino — Hoja de estilos principal
+   CSS puro, sin frameworks ni librerías.
+
+   Los valores (colores, tipografías, medidas, tiempos) están
+   calcados del sitio original en WordPress para que el
+   resultado visual sea idéntico en los tres breakpoints:
+   escritorio (>=1025), tablet (768–1024) y móvil (<=767).
+   ============================================================ */
+
+:root {
+  /* Paleta */
+  --crema: #e4d3b1;
+  --crema-activo: rgba(228, 211, 177, 0.76);
+  --negro: #000000;
+  --negro-origen: #020101;
+  --carbon: #1a1a1a;
+  --blanco: #ffffff;
+  --marron-boton: #2d1e17;
+  --trazo-hero: #e09e1b;
+  --trazo-reserva: #cc902f;
+
+  /* Tipografías */
+  --fuente-display: 'Bolderist', sans-serif;
+  --fuente-titulos: 'Poppins', sans-serif;
+  --fuente-texto: 'Poppins', sans-serif;
+  --fuente-nav: 'Montserrat', sans-serif;
+
+  /* Movimiento */
+  --transicion: 0.3s;
+  --curva-puntero: cubic-bezier(0.58, 0.3, 0.005, 1);
+  --carrusel-visibles: 4;
+}
+
+/* ---------- Reset mínimo ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--fuente-texto);
+  color: var(--blanco);
+  background-color: var(--negro);
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+ul {
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* ---------- Accesibilidad: salto al contenido ---------- */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 200;
+  padding: 0.75rem 1.25rem;
+  font-family: var(--fuente-nav);
+  font-weight: 500;
+  color: var(--negro);
+  background-color: var(--crema);
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+/* Texto solo para lectores de pantalla */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================
+   Botón "Reserva Aquí"
+   Blanco, texto marrón, mayúsculas, esquinas de 10px.
+   Hover = shrink (escala 0.9), igual que en el original.
+   ============================================================ */
+.boton {
+  display: inline-block;
+  padding: 14px 40px;
+  font-family: var(--fuente-nav);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--marron-boton);
+  fill: var(--marron-boton);
+  background-color: var(--blanco);
+  border-radius: 10px;
+  transition: transform var(--transicion);
+}
+
+.boton:hover,
+.boton:focus-visible {
+  transform: scale(0.9);
+}
+
+/* ============================================================
+   Cabecera
+   Barra negra: logo (20%) · menú (60%) · redes (20%).
+   Los porcentajes y los 10px de separación reproducen la
+   retícula del original, por lo que el logo escala con el ancho.
+   ============================================================ */
+.site-header {
+  padding: 2px 20px;
+  background-color: var(--negro);
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.site-header-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 10px;
+}
+
+.site-header-col-logo {
+  flex: 0 1 20%;
+}
+
+.site-header-col-nav {
+  position: relative;
+  flex: 0 1 60%;
+}
+
+.site-header-col-social {
+  flex: 0 1 20%;
+}
+
+.site-header-logo {
+  width: 38%;
+  padding: 10px;
+}
+
+.site-header-logo img {
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- Menú principal (escritorio) ---------- */
+.site-nav-list {
+  display: flex;
+}
+
+.site-nav-list li {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.site-nav-list a {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  margin: 0 4px;
+  padding: 10px 4px;
+  font-family: var(--fuente-nav);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--blanco);
+  transition: color var(--transicion);
+}
+
+.site-nav-list li:first-child a {
+  margin-left: 0;
+}
+
+.site-nav-list li:last-child a {
+  margin-right: 0;
+}
+
+/* Subrayado del puntero: aparece con fundido al pasar el cursor */
+.site-nav-list a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 100%;
+  height: 2px;
+  background-color: var(--crema);
+  opacity: 0;
+  transition: var(--transicion);
+  transition-timing-function: var(--curva-puntero);
+}
+
+.site-nav-list a:hover,
+.site-nav-list a:focus,
+.site-nav-list a[aria-current='page'] {
+  color: var(--crema);
+}
+
+.site-nav-list a:hover::after,
+.site-nav-list a:focus::after,
+.site-nav-list a[aria-current='page']::after {
+  opacity: 1;
+}
+
+/* ---------- Redes sociales ---------- */
+.site-social {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+  font-size: 18px;
+}
+
+.site-social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6em;
+  height: 1.6em;
+  font-size: inherit;
+  background-color: var(--blanco);
+  border-radius: 50%;
+  transition: transform var(--transicion);
+}
+
+.site-social a:hover,
+.site-social a:focus-visible {
+  transform: scale(0.9);
+}
+
+/* Caja cuadrada de 1em: el glifo queda centrado dentro, como en el original */
+.site-social svg {
+  width: 1em;
+  height: 1em;
+  fill: var(--negro);
+}
+
+/* ---------- Botón hamburguesa (tablet y móvil) ---------- */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  padding: 0.25em;
+  font-size: 26px;
+  color: var(--blanco);
+  background-color: rgba(0, 0, 0, 0.55);
+  border-radius: 3px;
+}
+
+.nav-toggle svg {
+  width: 1em;
+  height: auto;
+  fill: currentColor;
+  transition: transform var(--transicion);
+}
+
+.nav-toggle:hover svg,
+.nav-toggle:focus-visible svg {
+  transform: scale(0.9);
+}
+
+.nav-toggle .icono-cerrar,
+.nav-toggle[aria-expanded='true'] .icono-abrir {
+  display: none;
+}
+
+.nav-toggle[aria-expanded='true'] .icono-cerrar {
+  display: block;
+}
+
+/* ---------- Menú desplegable ---------- */
+.site-nav-desplegable {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 9997;
+  width: 100vw;
+  max-height: 0;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.51);
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: center top;
+  transition: max-height var(--transicion), transform var(--transicion);
+}
+
+.site-nav-desplegable.abierto {
+  max-height: 100vh;
+  transform: translateX(-50%) scaleY(1);
+}
+
+.site-nav-desplegable a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  font-family: var(--fuente-display);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--blanco);
+  transition: background-color var(--transicion), color var(--transicion);
+}
+
+.site-nav-desplegable a:hover,
+.site-nav-desplegable a:focus,
+.site-nav-desplegable a[aria-current='page'] {
+  color: var(--negro);
+  background-color: var(--crema-activo);
+}
+
+/* ============================================================
+   Hero
+   Foto de parrilla a pantalla completa (90vh) con velo negro
+   al 10% y el titular animado sobre ella.
+   ============================================================ */
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  padding: 0 10px;
+  background-color: var(--negro);
+  background-image: url('../img/hero-bg.webp');
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(at center center, #000000 100%, #000000 100%);
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* ============================================================
+   Titular con trazo animado
+   Reproduce el widget "animated headline" (estilo highlight):
+   un SVG que se dibuja en 1.2 s, permanece y se desvanece con
+   desenfoque a los 8 s. Ciclo completo: 9.2 s.
+   ============================================================ */
+.titular {
+  width: 100%;
+  font-family: var(--fuente-nav);
+  font-size: 60px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.hero .titular {
+  margin-top: -12px;
+  margin-bottom: 36px;
+}
+
+.titular-texto {
+  color: var(--blanco);
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.88);
+}
+
+.titular-marcado {
+  position: relative;
+  display: inline-block;
+  font-weight: 200;
+  color: var(--blanco);
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.88);
+}
+
+.titular-trazo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  overflow: visible;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.titular-trazo path {
+  fill: none;
+  stroke: var(--trazo-hero);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 0 1500;
+  opacity: 0;
+}
+
+.titular.animado .titular-trazo path {
+  animation: trazo-ciclo 9200ms infinite;
+}
+
+@keyframes trazo-ciclo {
+  0% {
+    stroke-dasharray: 0 1500;
+    opacity: 1;
+    filter: blur(0);
+    animation-timing-function: ease;
+  }
+
+  13.05% {
+    stroke-dasharray: 1500 1500;
+    opacity: 1;
+    filter: blur(0);
+    animation-timing-function: linear;
+  }
+
+  82.6% {
+    stroke-dasharray: 1500 1500;
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  86.96% {
+    stroke-dasharray: 1500 1500;
+    opacity: 0;
+    filter: blur(10px);
+  }
+
+  100% {
+    stroke-dasharray: 1500 1500;
+    opacity: 0;
+    filter: blur(10px);
+  }
+}
+
+/* ============================================================
+   Nuestro Origen
+   Dos columnas al 50%: texto sobre la res grabada y la foto
+   del plato con filtro de brillo al 60%.
+   ============================================================ */
+.seccion-origen {
+  display: flex;
+  justify-content: center;
+  padding: 60px 20px;
+  background-color: var(--negro);
+}
+
+.seccion-origen-grid {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  width: 96%;
+}
+
+.seccion-origen-texto {
+  position: relative;
+  display: flex;
+  flex: 0 1 50%;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  padding: 10px;
+  background-color: var(--negro-origen);
+  background-image: url('../img/origen-bg.webp');
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.seccion-origen-texto::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--negro);
+  opacity: 0.4;
+}
+
+.seccion-origen-texto>* {
+  position: relative;
+  z-index: 1;
+}
+
+.titulo-seccion {
+  font-family: var(--fuente-titulos);
+  font-size: 34px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1;
+  color: var(--blanco);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+.seccion-origen-texto p {
+  /* Separación fija (no relativa): el original la mantiene en los tres breakpoints */
+  margin-bottom: 14.4px;
+  font-family: var(--fuente-texto);
+  font-size: 18px;
+  font-weight: 200;
+  line-height: 1.5;
+  color: var(--blanco);
+  text-align: justify;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+.seccion-origen-texto .seccion-origen-firma {
+  text-align: center;
+}
+
+.seccion-origen-imagen {
+  display: flex;
+  flex: 0 1 50%;
+  flex-direction: column;
+  min-width: 0;
+  padding: 10px;
+}
+
+.seccion-origen-imagen img {
+  width: 100%;
+  height: auto;
+  filter: brightness(0.6) contrast(1.1);
+}
+
+/* ============================================================
+   Reserva
+   Fondo de madera con degradado radial al 70%; botón a la
+   izquierda y titular animado a la derecha sobre la res.
+   ============================================================ */
+.seccion-reserva {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  padding: 40px 20px;
+  background-image: url('../img/madera-bg.webp');
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.seccion-reserva::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(at center center, #28170f 0%, #000000 50%);
+  opacity: 0.7;
+}
+
+.seccion-reserva-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.seccion-reserva-boton {
+  display: flex;
+  flex: 0 1 50%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 160px;
+  padding: 10px;
+}
+
+.seccion-reserva-boton .boton {
+  font-size: 24px;
+}
+
+.seccion-reserva-titulo {
+  display: flex;
+  flex: 0 1 50%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 300px;
+  padding: 10px;
+  background-image: url('../img/origen-bg.webp');
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.seccion-reserva-titulo .titular {
+  margin: 8px 0 16px;
+  font-family: var(--fuente-titulos);
+  font-size: 28px;
+  font-weight: 300;
+}
+
+.seccion-reserva-titulo .titular-texto,
+.seccion-reserva-titulo .titular-marcado {
+  font-weight: 300;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+.seccion-reserva-titulo .titular-trazo path {
+  stroke: var(--trazo-reserva);
+  stroke-width: 10;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+}
+
+/* ============================================================
+   Galería
+   Carrusel de 4 imágenes (3 en tablet, 2 en móvil), avance
+   automático cada 4 s y transición de 400 ms.
+   ============================================================ */
+.seccion-galeria {
+  background-color: var(--negro);
+}
+
+.carrusel {
+  position: relative;
+}
+
+.carrusel-visor {
+  overflow: hidden;
+}
+
+.carrusel-pista {
+  display: flex;
+  will-change: transform;
+}
+
+.carrusel-item {
+  flex: 0 0 calc(100% / var(--carrusel-visibles));
+  max-width: calc(100% / var(--carrusel-visibles));
+}
+
+.carrusel-figura {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.carrusel-figura img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  transform-origin: center top;
+  filter: contrast(1.1) saturate(1.2);
+  transition: transform 800ms, filter 800ms;
+}
+
+.carrusel-figura::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: transparent;
+  transition: background-color 800ms;
+}
+
+.carrusel-figura:hover img,
+.carrusel-figura:focus-visible img {
+  transform: scale(1.1);
+}
+
+.carrusel-figura:hover::after,
+.carrusel-figura:focus-visible::after {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.carrusel-flecha {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25px;
+  color: rgba(238, 238, 238, 0.9);
+  transform: translateY(-50%);
+}
+
+.carrusel-flecha svg {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+}
+
+.carrusel-flecha-prev {
+  left: 30px;
+}
+
+.carrusel-flecha-next {
+  right: 30px;
+}
+
+/* ============================================================
+   Pie de página
+   Tres columnas: logo (20%) · dirección (50%) · teléfono (20%).
+   ============================================================ */
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 18vh;
+  padding: 10px;
+  background-color: var(--carbon);
+}
+
+.site-footer-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 10px;
+}
+
+.site-footer-col-logo {
+  flex: 0 1 20%;
+}
+
+.site-footer-col-datos {
+  flex: 0 1 50%;
+}
+
+.site-footer-col-tel {
+  flex: 0 1 20%;
+}
+
+/* Separaciones calcadas del original, distintas en cada columna */
+.site-footer-col-datos .boton-subir {
+  margin-bottom: 6px;
+}
+
+.site-footer-col-datos .site-footer-datos {
+  margin-bottom: 9px;
+}
+
+.site-footer-col-datos .site-footer-linea {
+  margin-bottom: 4px;
+}
+
+.site-footer-col-tel .site-footer-datos {
+  margin-top: 24px;
+  margin-bottom: 11px;
+}
+
+.site-footer-col-tel .site-footer-linea {
+  margin-bottom: 6px;
+}
+
+.site-footer-logo img {
+  width: 48px;
+  height: 58px;
+  margin: 0 auto;
+}
+
+/* Flecha de "volver arriba" con rebote al entrar en pantalla */
+.boton-subir {
+  display: block;
+  width: 28px;
+  height: 28px;
+  margin: 0 auto;
+  color: var(--blanco);
+  transition: color var(--transicion);
+}
+
+.boton-subir:hover,
+.boton-subir:focus-visible {
+  color: var(--crema);
+}
+
+.boton-subir svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.site-footer-datos li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.site-footer-datos a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.site-footer-datos .icono {
+  display: flex;
+  align-items: center;
+  padding-inline-end: 6px;
+}
+
+.site-footer-datos .icono svg {
+  width: 20px;
+  height: 20px;
+  margin: 0 2.5px;
+  fill: var(--blanco);
+  transition: fill var(--transicion);
+}
+
+.site-footer-datos a:hover .icono svg,
+.site-footer-datos a:focus-visible .icono svg {
+  fill: var(--crema);
+}
+
+.site-footer-datos .texto {
+  padding-left: 5px;
+  font-family: var(--fuente-texto);
+  font-size: 16px;
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--blanco);
+}
+
+/* Ancho explícito: reserva el hueco antes de que cargue la imagen diferida
+   y evita que el pie salte al terminar de descargarla. */
+.site-footer-linea {
+  max-width: 100%;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.site-footer-col-datos .site-footer-linea {
+  width: 400px;
+}
+
+.site-footer-col-tel .site-footer-linea {
+  width: 300px;
+}
+
+/* ============================================================
+   Widget flotante de contacto
+   Botón negro de 54px abajo a la derecha con la etiqueta
+   "Contáctenos"; al abrirlo despliega teléfono, correo y mapa.
+   ============================================================ */
+.widget-contacto {
+  position: fixed;
+  right: 29px;
+  bottom: 25px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.widget-contacto-canales {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity var(--transicion), transform var(--transicion), visibility var(--transicion);
+  visibility: hidden;
+}
+
+.widget-contacto.abierto .widget-contacto-canales {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+.widget-contacto-canal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.widget-contacto-canal svg {
+  display: block;
+  width: 54px;
+  height: 54px;
+}
+
+.widget-contacto-etiqueta {
+  padding: 5px 15px;
+  font-family: var(--fuente-texto);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: #333333;
+  white-space: nowrap;
+  background-color: var(--blanco);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transition: opacity var(--transicion);
+}
+
+.widget-contacto-canal:hover .widget-contacto-etiqueta,
+.widget-contacto-canal:focus-visible .widget-contacto-etiqueta {
+  opacity: 1;
+}
+
+.widget-contacto-base {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Al abrir, la etiqueta cede su sitio a la equis, igual que el original */
+.widget-contacto.abierto .widget-contacto-cta {
+  display: none;
+}
+
+.widget-contacto-cta {
+  padding: 5px 15px;
+  font-family: var(--fuente-texto);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: #333333;
+  white-space: nowrap;
+  background-color: var(--blanco);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.widget-contacto-boton {
+  display: block;
+  width: 54px;
+  height: 54px;
+  animation: salto 3s ease infinite;
+}
+
+.widget-contacto-boton svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.widget-contacto-boton .icono-cerrar,
+.widget-contacto.abierto .widget-contacto-boton .icono-abrir {
+  display: none;
+}
+
+.widget-contacto.abierto .widget-contacto-boton .icono-cerrar {
+  display: block;
+}
+
+.widget-contacto.abierto .widget-contacto-boton {
+  animation: none;
+}
+
+@keyframes salto {
+
+  0%,
+  78%,
+  100% {
+    transform: translateY(0);
+  }
+
+  86% {
+    transform: translateY(-8px);
+  }
+
+  92% {
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   Animaciones de entrada
+   El JS añade .anima-activa cuando el elemento entra en pantalla.
+   ============================================================ */
+.anima {
+  visibility: hidden;
+}
+
+.anima-activa {
+  visibility: visible;
+  animation-duration: 1.25s;
+  animation-fill-mode: both;
+}
+
+.anima-slide.anima-activa {
+  animation-name: slideInDown;
+}
+
+.anima-tada.anima-activa {
+  animation-name: tada;
+}
+
+.anima-rebote.anima-activa {
+  animation-name: bounce;
+  transform-origin: center bottom;
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translate3d(0, -100%, 0);
+    visibility: visible;
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes tada {
+
+  from,
+  to {
+    transform: scale3d(1, 1, 1);
+  }
+
+  10%,
+  20% {
+    transform: scale3d(0.9, 0.9, 0.9) rotate3d(0, 0, 1, -3deg);
+  }
+
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg);
+  }
+
+  40%,
+  60%,
+  80% {
+    transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg);
+  }
+}
+
+@keyframes bounce {
+
+  from,
+  20%,
+  53%,
+  80%,
+  to {
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    transform: translate3d(0, 0, 0);
+  }
+
+  40%,
+  43% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -30px, 0);
+  }
+
+  70% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -15px, 0);
+  }
+
+  90% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+/* ============================================================
+   Tablet: 768–1024 px
+   ============================================================ */
+@media (max-width: 1024px) {
+  :root {
+    --carrusel-visibles: 3;
+  }
+
+  /* El menú horizontal cede el paso a la hamburguesa */
+  .site-nav {
+    display: none;
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+
+  .site-header-logo {
+    width: 70px;
+  }
+
+  .hero {
+    min-height: 600px;
+  }
+
+  .hero .titular {
+    font-size: 50px;
+  }
+
+  .seccion-origen-grid {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .seccion-origen-texto {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 20px 10px;
+    background-size: 400px auto;
+  }
+
+  .seccion-origen-texto p {
+    font-size: 17px;
+  }
+
+  .seccion-origen-imagen {
+    flex: 0 0 auto;
+    width: 80%;
+  }
+
+  .seccion-reserva-boton .boton,
+  .hero .boton {
+    font-size: 20px;
+  }
+
+  .seccion-reserva-titulo .titular {
+    font-size: 24px;
+  }
+
+  .site-footer-col-logo,
+  .site-footer-col-tel {
+    flex: 0 1 20%;
+  }
+
+  .site-footer-col-datos {
+    flex: 0 1 50%;
+  }
+
+  .site-footer-datos .texto {
+    font-size: 12px;
+  }
+}
+
+/* ============================================================
+   Móvil: hasta 767 px
+   La cabecera se apila: logo, hamburguesa y redes.
+   ============================================================ */
+@media (max-width: 767px) {
+  :root {
+    --carrusel-visibles: 2;
+  }
+
+  .site-header-inner {
+    flex-wrap: wrap;
+  }
+
+  .site-header-col {
+    flex: 0 0 100%;
+  }
+
+  .site-header-col-nav {
+    margin-top: -20px;
+  }
+
+  .site-header-col-social {
+    margin-top: -10px;
+    margin-bottom: 4px;
+  }
+
+  .site-header-logo {
+    width: auto;
+    padding: 0;
+  }
+
+  .site-header-logo img {
+    width: 48px;
+    height: 58px;
+    margin: 0 auto;
+  }
+
+  .site-social {
+    justify-content: center;
+    font-size: 10px;
+  }
+
+  .nav-toggle {
+    font-size: 24px;
+  }
+
+  .site-nav-desplegable {
+    background-color: rgba(0, 0, 0, 0.82);
+  }
+
+  .site-nav-desplegable a {
+    padding: 4px 20px;
+    font-size: 20px;
+  }
+
+  .hero .titular {
+    font-size: 30px;
+  }
+
+  .hero .boton {
+    padding: 10px 30px;
+    font-size: 16px;
+  }
+
+  .titulo-seccion {
+    font-size: 30px;
+  }
+
+  .seccion-origen-grid {
+    width: 100%;
+  }
+
+  .seccion-origen-texto p {
+    font-size: 16px;
+  }
+
+  .seccion-origen-imagen {
+    width: 100%;
+  }
+
+  /* El titular queda arriba y el botón debajo */
+  .seccion-reserva-inner {
+    flex-direction: column;
+  }
+
+  .seccion-reserva-titulo {
+    order: -1;
+  }
+
+  .seccion-reserva-boton,
+  .seccion-reserva-titulo {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .seccion-reserva-titulo {
+    min-height: 200px;
+  }
+
+  .seccion-reserva-boton .boton {
+    padding: 10px 30px;
+    font-size: 20px;
+  }
+
+  .seccion-reserva-titulo .titular {
+    font-size: 20px;
+  }
+
+  .carrusel-flecha-prev {
+    left: 10px;
+  }
+
+  .carrusel-flecha-next {
+    right: 10px;
+  }
+
+  .site-footer {
+    flex-wrap: wrap;
+  }
+
+  .site-footer-col {
+    flex: 0 0 100%;
+  }
+}
+
+/* ============================================================
+   Movimiento reducido
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .titular.animado .titular-trazo path,
+  .widget-contacto-boton,
+  .anima-activa {
+    animation: none;
+  }
+
+  .titular.animado .titular-trazo path {
+    stroke-dasharray: 1500 1500;
+    opacity: 1;
+  }
+
+  .anima {
+    visibility: visible;
+  }
+
+  .carrusel-pista {
+    transition: none;
+  }
+}

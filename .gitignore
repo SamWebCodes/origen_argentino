@@ -1,0 +1,17 @@
+# Configuración local del editor.
+# .vscode/sftp.json guarda host, usuario y contraseña del FTP: nunca se versiona.
+.vscode/
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Registros y volcados
+*.log
+*.sql
+
+# Temporales del editor
+*.swp
+*~

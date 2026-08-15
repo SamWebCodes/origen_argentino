@@ -1,0 +1,71 @@
+# ============================================================
+# Origen Argentino — Configuración Apache
+# HTTPS forzado, headers de seguridad, compresión y caché.
+# El CSP con nonce lo emite PHP (includes/header.php).
+# ============================================================
+
+Options -Indexes
+ServerSignature Off
+
+# La raíz "/" sirve index.php sin exponerlo en la URL.
+DirectoryIndex index.php
+
+# ---------- HTTPS forzado ----------
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+
+	RewriteCond %{HTTPS} off
+	RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+	# Rutas heredadas de WordPress: devolver 410 (ya no existen).
+	# Evita rastreo infinito de los bots sobre /wp-content, /feed, etc.
+	RewriteRule ^wp-(content|includes|admin|json|login)(/|$) - [G,NC]
+	RewriteRule ^(feed|comments|xmlrpc\.php|wp-cron\.php)($|/) - [G,NC]
+
+	# Sin "www" (canónico: origenargentino)
+	RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+	RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+
+	# Sin "index.php" (canónico: la raíz).
+	# Se compara contra THE_REQUEST (la línea literal que mandó el navegador)
+	# y no contra la ruta ya reescrita: así la subpetición interna que genera
+	# DirectoryIndex al servir "/" no vuelve a disparar la regla, que es lo
+	# que provocaría un bucle infinito de redirecciones.
+	RewriteCond %{THE_REQUEST} \s/+index\.php[\s?] [NC]
+	RewriteRule ^ / [L,R=301]
+</IfModule>
+
+# ---------- Headers de seguridad ----------
+<IfModule mod_headers.c>
+	Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	Header always set X-Frame-Options "DENY"
+	Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+	Header always set Cross-Origin-Opener-Policy "same-origin"
+</IfModule>
+
+# ---------- Compresión ----------
+<IfModule mod_deflate.c>
+	AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
+</IfModule>
+
+# ---------- Caché de assets ----------
+<IfModule mod_expires.c>
+	ExpiresActive On
+	ExpiresByType text/css "access plus 1 year"
+	ExpiresByType application/javascript "access plus 1 year"
+	ExpiresByType image/webp "access plus 1 year"
+	ExpiresByType image/svg+xml "access plus 1 year"
+	ExpiresByType font/woff2 "access plus 1 year"
+	ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# MIME para fuentes WOFF2 (por si el servidor no lo declara)
+<IfModule mod_mime.c>
+	AddType font/woff2 .woff2
+	AddType image/webp .webp
+</IfModule>
+
+# ---------- Protección de archivos sensibles ----------
+<FilesMatch "^(constants\.php|.*\.log|.*\.sql|.*\.md)$">
+	Require all denied
+</FilesMatch>
