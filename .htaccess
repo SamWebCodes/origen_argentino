@@ -69,3 +69,5 @@ DirectoryIndex index.php
 <FilesMatch "^(constants\.php|.*\.log|.*\.sql|.*\.md)$">
 	Require all denied
 </FilesMatch>
+
+# ---------- Desarrado y mantenido por Sammy Ramsan @SamWebCodes
