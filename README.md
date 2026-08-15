@@ -25,17 +25,12 @@ assets/js/main.js      Menú, carrusel, animaciones y widget de contacto
 - **Breakpoints.** Escritorio ≥1025 px · tablet 768–1024 px · móvil ≤767 px.
 - **Accesibilidad.** Enlace de salto al contenido, `aria-expanded`/`inert` en los desplegables, foco visible y respeto a `prefers-reduced-motion`.
 
-## Desarrollo local
+## Rastreabilidad
+Fuera del dominio de producción el sitio se sirve automáticamente con `noindex`. en cualquier entorno de prueba en línea.
 
-```bash
-php -S 127.0.0.1:8000
-```
-
-Fuera del dominio de producción el sitio se sirve automáticamente con `noindex`.
 
 ## Despliegue
-
-Subida por FTP a la raíz del hosting. La configuración local del cliente FTP vive en `.vscode/sftp.json`, que está excluido del repositorio por contener credenciales.
+SSH - HTTPS a criterio del deployer.
 
 ---
 
