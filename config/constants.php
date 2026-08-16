@@ -5,7 +5,7 @@
  * Los datos editables llegan desde Cocinadmin; aquí permanecen únicamente
  * las constantes que consumen las plantillas y la configuración de entorno.
  *
- * @author Lang-Lab / Samuel Ramírez Sánchez
+ * @author WMS.GURU / Samuel Ramsan
  * @version 1.2.0
  */
 
@@ -34,6 +34,11 @@ define('SITIO_ESLOGAN', oa_setting('site_tagline'));
 define('SITIO_DESCRIPCION', oa_setting('site_description'));
 define('SITIO_COCINA_PRINCIPAL', oa_setting('cuisine_primary'));
 define('SITIO_COCINA_SECUNDARIA', oa_setting('cuisine_secondary'));
+
+// Autor (identidad pública para buscadores)
+define('SITIO_AUTOR', 'Samuel Ramsan');
+define('SITIO_AUTOR_PROFESION', 'Desarrollador web');
+define('SITIO_AUTOR_URL', 'https://github.com/SamWebCodes');
 
 // Contacto
 define('SITIO_TELEFONO_DISPLAY', oa_setting('phone_display'));

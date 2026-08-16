@@ -34,9 +34,8 @@ $csp_nonce = base64_encode(random_bytes(16));
 
 /**
  * Indexación por entorno.
- * Solo el dominio de producción es rastreable: cualquier otro host
- * (origen.wms.guru, una IP, localhost) se sirve con noindex/nofollow.
- * Al apuntar el dominio real, la etiqueta desaparece sola.
+ * El sitio es rastreable e indexable: se publica una meta robots con
+ * "index, follow" y no se emite ninguna cabecera que lo impida.
  *
  * HTTP_HOST lo controla quien hace la petición, así que se normaliza antes
  * de compararlo (puerto y punto final del FQDN incluidos) y NUNCA se usa
@@ -46,10 +45,6 @@ $host_actual = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
 $host_actual = (string) preg_replace('/:\d+$/', '', $host_actual);
 $host_actual = rtrim($host_actual, '.');
 $es_produccion = ($host_actual === SITIO_HOST_PRODUCCION || $host_actual === 'www.' . SITIO_HOST_PRODUCCION);
-
-if (!$es_produccion) {
-	header('X-Robots-Tag: noindex, nofollow, noarchive, nosnippet');
-}
 
 /**
  * Content-Security-Policy.
@@ -139,6 +134,27 @@ $json_ld = (string) json_encode(
 );
 // Alinea el bloque con la sangría del <head> al imprimirlo.
 $json_ld = str_replace("\n", "\n\t\t", $json_ld);
+
+/**
+ * Datos estructurados del autor (schema.org Person).
+ * Consolida la identidad pública "Samuel Ramsan" como entidad reconocible
+ * y la enlaza a su perfil canónico, sin exponer ningún nombre personal.
+ */
+$datos_autor = [
+	'@context' => 'https://schema.org',
+	'@type' => 'Person',
+	'name' => SITIO_AUTOR,
+	'jobTitle' => SITIO_AUTOR_PROFESION,
+	'url' => SITIO_AUTOR_URL,
+	'sameAs' => [SITIO_AUTOR_URL],
+];
+
+$json_ld_autor = (string) json_encode(
+	$datos_autor,
+	JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PRETTY_PRINT
+);
+// Alinea el bloque con la sangría del <head> al imprimirlo.
+$json_ld_autor = str_replace("\n", "\n\t\t", $json_ld_autor);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -148,12 +164,10 @@ $json_ld = str_replace("\n", "\n\t\t", $json_ld);
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title><?= esc(SITIO_NOMBRE) ?> &#8211; <?= esc(SITIO_ESLOGAN) ?></title>
 	<meta name="description" content="<?= esc(SITIO_DESCRIPCION) ?>">
+	<meta name="author" content="<?= esc(SITIO_AUTOR) ?>">
+	<meta name="robots" content="index, follow">
 	<?php if ($es_produccion): ?>
 		<link rel="canonical" href="<?= esc(SITIO_URL_PRODUCCION) ?>">
-	<?php else: ?>
-		<!-- Entorno de prueba: fuera de buscadores. Sin canonical, para no
-	     arrastrar el noindex hacia el dominio de producción. -->
-		<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
 	<?php endif; ?>
 
 	<!-- Favicons -->
@@ -181,6 +195,11 @@ $json_ld = str_replace("\n", "\n\t\t", $json_ld);
 	<!-- Datos estructurados: Restaurant -->
 	<script type="application/ld+json" nonce="<?= esc($csp_nonce) ?>">
 		<?= $json_ld ?>
+	</script>
+
+	<!-- Datos estructurados: Person (autor) -->
+	<script type="application/ld+json" nonce="<?= esc($csp_nonce) ?>">
+		<?= $json_ld_autor ?>
 	</script>
 
 	<!-- Google Tag Manager (analítica del cliente) -->

@@ -84,10 +84,10 @@ usar el instalador o una copia consistente con la aplicación detenida.
 - Tipografías e iconos auto-alojados.
 - CSP con nonce y `'strict-dynamic'`: todo script nuevo necesita el nonce de la petición.
 - `style-src 'self'`: no se permiten estilos inline; los fondos editables salen de una hoja externa versionada.
-- Solo el host de producción es rastreable; los demás reciben `noindex` y no emiten canonical.
+- El sitio es rastreable e indexable: emite `index, follow` en la meta robots.
 - Breakpoints: escritorio ≥1025 px, tablet 768–1024 px y móvil ≤767 px.
 - Accesibilidad con enlace de salto, estados ARIA, `inert`, foco visible y `prefers-reduced-motion`.
 
 ---
 
-Desarrollado por [SamRamSan](https://github.com/SamWebCodes) / Samuel Ramírez Sánchez @ wms.guru.
+Desarrollado por [Samuel Ramsan](https://github.com/SamWebCodes) @ wms.guru.
